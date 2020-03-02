@@ -4,7 +4,7 @@
 Plugin Name: WPU Incontent Related
 Plugin URI: https://github.com/WordPressUtilities/WPUIncontentRelated
 Description: Links to related posts in content
-Version: 0.1.0
+Version: 0.1.1
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -23,10 +23,7 @@ class WPUIncontentRelated {
     }
 
     public function the_content($content) {
-        if (!is_main_query() || is_admin()) {
-            return $content;
-        }
-        if (!is_page() && !is_single()) {
+        if ((!is_main_query() || is_admin()) || !is_single()) {
             return $content;
         }
 
