@@ -4,7 +4,7 @@
 Plugin Name: WPU Incontent Related
 Plugin URI: https://github.com/WordPressUtilities/WPUIncontentRelated
 Description: Links to related posts in content
-Version: 0.2.0
+Version: 0.3.0
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -14,6 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 include dirname(__FILE__) . '/inc/classes/wpumatchtags.class.php';
 
 class WPUIncontentRelated {
+    private $sections = array();
     private $settings = array(
         'tag_interval' => 3,
         'post_type' => 'post',
@@ -70,7 +71,8 @@ class WPUIncontentRelated {
                 continue;
             }
 
-            $new_content .= array_shift($sections);
+            $_section = array_shift($sections);
+            $new_content .= $_section['html'];
         }
 
         /* Replace tmp matches by tags */
@@ -78,7 +80,13 @@ class WPUIncontentRelated {
         $wpuMatchTags->replace_matches();
         $content = $wpuMatchTags->get_html();
 
+        $this->sections = $sections;
+
         return $content;
+    }
+
+    public function get_sections() {
+        return $this->sections;
     }
 
     public function check_interval($i) {
@@ -86,18 +94,34 @@ class WPUIncontentRelated {
     }
 
     public function get_related($post_id) {
-        $args = apply_filters('wpuincontentrelated__get_related__query', array(
+        $args = array(
             'post_type' => $this->settings['post_type'],
             'posts_per_page' => 20,
             'orderby' => $this->settings['shuffle_posts'] ? 'rand' : 'date',
             'post__not_in' => array($post_id)
-        ));
+        );
+
+        $categ = get_the_category($post_id);
+        if (is_array($categ) && isset($categ[0])) {
+            $args['tax_query'] = array(
+                array(
+                    'taxonomy' => 'category',
+                    'terms' => $categ[0]->term_id
+                )
+            );
+        }
+
+        $args = apply_filters('wpuincontentrelated__get_related__query', $args);
 
         $posts = get_posts($args);
 
         $sections = array();
         foreach ($posts as $i => $_post) {
-            $sections[] = $this->get_related_html($_post, $i);
+            $sections[] = array(
+                'i' => $i,
+                'post' => $_post,
+                'html' => $this->get_related_html($_post, $i)
+            );
         }
         return $sections;
     }
