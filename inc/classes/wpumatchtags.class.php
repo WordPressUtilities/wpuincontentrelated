@@ -32,7 +32,13 @@ class wpuMatchTags {
         preg_match_all($regexp, $html, $matches);
         $i = count($this->matches_tmp);
         foreach ($matches[0] as $match) {
-            $key = $this->start_part . $i . $this->end_part;
+
+            $key_details = '';
+            if (preg_match('/<([a-z0-2]+)([ >]{1})/isU', trim($match), $match_tag)) {
+                $key_details = $match_tag[1] . '_';
+            }
+
+            $key = $this->start_part . $key_details . $i . $this->end_part;
             $this->matches_tmp[$key] = $match;
             $html = str_replace($match, $key, $html);
             $i++;
