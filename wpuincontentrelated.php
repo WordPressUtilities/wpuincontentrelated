@@ -4,7 +4,7 @@
 Plugin Name: WPU Incontent Related
 Plugin URI: https://github.com/WordPressUtilities/WPUIncontentRelated
 Description: Links to related posts in content
-Version: 0.4.0
+Version: 0.4.1
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -18,6 +18,7 @@ class WPUIncontentRelated {
     private $settings = array(
         'tag_start' => 3,
         'tag_interval' => 3,
+        'tag_separation' => '££££',
         'post_type' => 'post',
         'shuffle_posts' => false
     );
@@ -45,8 +46,7 @@ class WPUIncontentRelated {
         $content = $wpuMatchTags->get_html();
 
         /* Explode between root tags */
-        $tag_separation = '££££';
-        $content_parts = explode($tag_separation, $content);
+        $content_parts = explode($this->settings['tag_separation'], $content);
         $last_part = count($content_parts) - 1;
 
         /* Merge all parts */
@@ -60,7 +60,7 @@ class WPUIncontentRelated {
             }
 
             /* Add separation */
-            $new_content .= $tag_separation;
+            $new_content .= $this->settings['tag_separation'];
 
             /* No more sections available to insert */
             if (empty($sections)) {
@@ -91,7 +91,7 @@ class WPUIncontentRelated {
     }
 
     public function check_interval($i) {
-        return (($i - $this->settings['tag_start']) % $this->settings['tag_interval'] == 0);
+        return (($i - $this->settings['tag_start'] + 1) % $this->settings['tag_interval'] == 0);
     }
 
     public function get_related($post_id) {
