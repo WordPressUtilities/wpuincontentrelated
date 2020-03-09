@@ -4,7 +4,7 @@
 Plugin Name: WPU Incontent Related
 Plugin URI: https://github.com/WordPressUtilities/WPUIncontentRelated
 Description: Links to related posts in content
-Version: 0.4.1
+Version: 0.4.2
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -102,14 +102,20 @@ class WPUIncontentRelated {
             'post__not_in' => array($post_id)
         );
 
+        $excluded_cats = apply_filters('wpuincontentrelated__get_related__excluded_cats', array());
         $categ = get_the_category($post_id);
-        if (is_array($categ) && isset($categ[0])) {
-            $args['tax_query'] = array(
-                array(
-                    'taxonomy' => 'category',
-                    'terms' => $categ[0]->term_id
-                )
-            );
+        if (is_array($categ)) {
+            foreach ($categ as $_cat_item) {
+                if (in_array($_cat_item->term_id, $excluded_cats)) {
+                    continue;
+                }
+                $args['tax_query'] = array(
+                    array(
+                        'taxonomy' => 'category',
+                        'terms' => $_cat_item->term_id
+                    )
+                );
+            }
         }
 
         $args = apply_filters('wpuincontentrelated__get_related__query', $args);
