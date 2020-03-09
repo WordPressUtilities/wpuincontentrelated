@@ -4,7 +4,7 @@
 Plugin Name: WPU Incontent Related
 Plugin URI: https://github.com/WordPressUtilities/WPUIncontentRelated
 Description: Links to related posts in content
-Version: 0.4.2
+Version: 0.4.3
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
@@ -14,6 +14,7 @@ License URI: http://opensource.org/licenses/MIT
 include dirname(__FILE__) . '/inc/classes/wpumatchtags.class.php';
 
 class WPUIncontentRelated {
+    private $wp_head_end = false;
     private $sections = array();
     private $settings = array(
         'tag_start' => 3,
@@ -30,11 +31,20 @@ class WPUIncontentRelated {
     public function plugins_loaded() {
         $this->settings['callback_interval'] = array(&$this, 'check_interval');
         $this->settings = apply_filters('wpuincontentrelated__settings', $this->settings);
+        add_action('wp_head', array(&$this, 'wp_head'), 999);
         add_filter('the_content', array(&$this, 'the_content'), 999);
+    }
+
+    public function wp_head() {
+        $this->wp_head_end = true;
     }
 
     public function the_content($content) {
         if ((!is_main_query() || is_admin()) || !is_single()) {
+            return $content;
+        }
+
+        if(!$this->wp_head_end){
             return $content;
         }
 
