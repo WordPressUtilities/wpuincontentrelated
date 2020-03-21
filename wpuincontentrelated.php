@@ -4,11 +4,12 @@
 Plugin Name: WPU Incontent Related
 Plugin URI: https://github.com/WordPressUtilities/WPUIncontentRelated
 Description: Links to related posts in content
-Version: 0.4.3
+Version: 0.5.0
 Author: Darklg
 Author URI: http://darklg.me/
 License: MIT License
 License URI: http://opensource.org/licenses/MIT
+Dependencies: WPUPostMetas
 */
 
 include dirname(__FILE__) . '/inc/classes/wpumatchtags.class.php';
@@ -33,6 +34,10 @@ class WPUIncontentRelated {
         $this->settings = apply_filters('wpuincontentrelated__settings', $this->settings);
         add_action('wp_head', array(&$this, 'wp_head'), 999);
         add_filter('the_content', array(&$this, 'the_content'), 999);
+
+        add_filter('wputh_post_metas_boxes', array(&$this, 'wputh_post_metas_boxes'), 10, 3);
+        add_filter('wputh_post_metas_fields', array(&$this, 'wputh_post_metas_fields'), 10, 3);
+
     }
 
     public function wp_head() {
@@ -44,11 +49,21 @@ class WPUIncontentRelated {
             return $content;
         }
 
-        if(!$this->wp_head_end){
+        if (!$this->wp_head_end) {
             return $content;
         }
 
-        $sections = $this->get_related(get_the_ID());
+        $post_id = get_the_ID();
+        $disable_incontent_related = get_post_meta($post_id, 'wpuincontentrelated_disable_for_post', 1);
+        if ($disable_incontent_related == '1') {
+            return $content;
+        }
+
+        if (apply_filters('wpuincontentrelated__get_related__disable_for_post', false, $post_id)) {
+            return $content;
+        }
+
+        $sections = $this->get_related($post_id);
 
         /* Isolate only root tags and keep only temp matches */
         $wpuMatchTags = new wpuMatchTags($content);
@@ -150,6 +165,29 @@ class WPUIncontentRelated {
         $html .= '</section>';
         return apply_filters('wpuincontentrelated__get_related_html__value', $html, $_post, $i);
     }
+
+    /* ----------------------------------------------------------
+      Admin
+    ---------------------------------------------------------- */
+
+    public function wputh_post_metas_boxes($boxes) {
+        $boxes['box_wpuincontentrelated'] = array(
+            'name' => 'WPU Incontent Related',
+            'post_type' => $this->settings['post_type']
+        );
+        return $boxes;
+    }
+
+    public function wputh_post_metas_fields($fields) {
+        $fields['wpuincontentrelated_disable_for_post'] = array(
+            'box' => 'box_wpuincontentrelated',
+            'type' => 'select',
+            'name' => 'Disable',
+            'help' => 'Hide InContent related for this post'
+        );
+        return $fields;
+    }
+
 }
 
 $WPUIncontentRelated = new WPUIncontentRelated();
